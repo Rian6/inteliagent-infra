@@ -33,6 +33,8 @@ npm --prefix inteliagent-app run typecheck
 
 ## Produção e CI/CD
 
+A `master` dos oito repositórios exige pull request, branch atualizada e check `verify` aprovado pelo GitHub Actions, inclusive para administradores. Push direto e force push estão bloqueados. Consulte o [fluxo de contribuição](docs/CONTRIBUICAO.md).
+
 O Docker Compose executa MySQL, migrações, três APIs Java, chat Python, serviço de versões e Nginx. Somente o Nginx é publicado em loopback, na porta 8180. O Cloudflare Tunnel oferece HTTPS.
 
 Cada projeto tem um workflow CI para pushes em master e pull requests. O servidor consulta os resultados a cada 30 minutos e aplica somente o commit atual de master aprovado pelo workflow. O deploy compila, executa migrações e verifica as APIs. Uma falha restaura o código anterior; alterações de schema exigem recuperação própria.
