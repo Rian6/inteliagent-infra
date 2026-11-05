@@ -41,6 +41,8 @@ A assinatura histórica é preservada para atualizar os APKs existentes. A chave
 
 Configure SMTP_HOST/PORT/USER/PASSWORD, SMTP_AUTH/TLS e MAIL_FROM em `.local/production.env` para cadastro e recuperação por email. O SMTP local de testes não entrega emails externos. O administrador inicial precisa de bootstrap controlado; não publique contas de demonstração.
 
+Após configurar e testar o provedor, defina SMTP_HEALTH_ENABLED=true para incluir SMTP no healthcheck do auth. Enquanto não há provedor, o healthcheck cobre a API e o banco, e os fluxos de email permanecem indisponíveis.
+
 ## Recuperação
 
 Faça backup criptografado do MySQL e das mídias antes das migrações, com cópia fora do servidor. Teste a restauração. Remover volumes apaga os dados. O rollback automático restaura código e não desfaz schema.
