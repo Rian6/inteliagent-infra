@@ -38,6 +38,8 @@ try:
     subprocess.run(compose+['up','-d','--force-recreate','migration'],check=True)
     subprocess.run(compose+['wait','migration'],check=True)
     subprocess.run(compose+['up','-d','--wait','--wait-timeout','240'],check=True)
+    # Refresh Nginx upstream addresses after containers are recreated.
+    subprocess.run(compose+['restart','webapp'],check=True)
     # Every backend must respond successfully before accepting a deployment.
     for service,port in [('auth',8080),('main-server',8070),('load-server',8090)]:
         subprocess.run(compose+['exec','-T',service,'curl','--retry','20','--retry-all-errors','--retry-delay','3','-fsS',f'http://localhost:{port}/actuator/health'],check=True)
