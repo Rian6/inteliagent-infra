@@ -69,8 +69,14 @@ offline=true;await client.checkForAppUpdate(true);assert.equal(state.severity,'m
 
 const ui=await build({entryPoints:['inteliagent-app/src/components/updates/AppUpdateBanner.tsx'],bundle:true,write:false,format:'cjs',platform:'node',packages:'external',external:['@root/*'],jsx:'automatic'});
 const treeModule={exports:{}},downloads=[];
+const storeBundle=await build({entryPoints:['inteliagent-app/src/service/updates/updateStore.ts'],bundle:true,write:false,format:'cjs',platform:'node',packages:'external'});
+const storeModule={exports:{}};
+vm.runInNewContext(storeBundle.outputFiles[0].text,{module:storeModule,exports:storeModule.exports,require:id=>{assert.equal(id,'zustand');return {create:()=>store};}});
 const jsx=(type,props)=>({type,props});
 const uiModules={'react/jsx-runtime':{jsx,jsxs:jsx},'react-native':{Text:'Text',View:'View',Pressable:'Pressable',StyleSheet:{create:value=>value},Linking:{openURL:async url=>downloads.push(url)}},'react-native-safe-area-context':{SafeAreaView:'SafeAreaView'},'@root/service/updates/updateStore':{useUpdateStore:store}};
+uiModules['@root/service/updates/updateStore']={...storeModule.exports,useUpdateStore:store};
+uiModules['@root/theme']={colors:{background:'#fff',onSurface:'#000',onSurfaceVariant:'#555'}};
+uiModules['@root/service/theme/themeStore']={useThemeStore:selector=>selector({mode:'light'})};
 vm.runInNewContext(ui.outputFiles[0].text,{module:treeModule,exports:treeModule.exports,require:id=>{assert.ok(id in uiModules,id);return uiModules[id];}});
 const flatten=node=>!node||typeof node!=='object'?[]:[node,...[node.props?.children].flat(Infinity).flatMap(flatten)];
 const render=()=>treeModule.exports.AppUpdateBanner();
