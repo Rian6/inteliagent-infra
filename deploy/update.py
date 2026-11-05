@@ -40,6 +40,7 @@ try:
     subprocess.run(compose+['up','-d','--wait','--wait-timeout','240'],check=True)
     # Refresh Nginx upstream addresses after containers are recreated.
     subprocess.run(compose+['restart','webapp'],check=True)
+    subprocess.run(compose+['up','-d','--no-deps','--wait','--wait-timeout','60','webapp'],check=True)
     # Every backend must respond successfully before accepting a deployment.
     for service,port in [('auth',8080),('main-server',8070),('load-server',8090)]:
         subprocess.run(compose+['exec','-T',service,'curl','--retry','20','--retry-all-errors','--retry-delay','3','-fsS',f'http://localhost:{port}/actuator/health'],check=True)
@@ -48,6 +49,7 @@ try:
 except Exception:
     for repo in changed: run('git','-C',repo,'checkout','--detach',previous[repo])
     for repo in changed: subprocess.run(compose+['build',repo.removeprefix('inteliagent-')],check=True)
-    subprocess.run(compose+['up','-d'],check=True)
+    subprocess.run(compose+['up','-d','--wait','--wait-timeout','240'],check=True)
+    subprocess.run(compose+['restart','webapp'],check=True)
     # Database schema changes are never reversed automatically.
     raise
