@@ -4,11 +4,12 @@ from pathlib import Path
 import base64
 import os
 import secrets
+import subprocess
 
 os.umask(0o077)
 directory = Path(__file__).resolve().parents[1] / '.local'
 directory.mkdir(mode=0o700, exist_ok=True)
-names = ['database.env', 'production.env', 'init.sql', 'auth.env', 'main-server.env', 'load-server.env', 'chat.env', 'migration.env']
+names = ['database.env', 'production.env', 'init.sql', 'auth.env', 'main-server.env', 'load-server.env', 'chat.env', 'migration.env', 'vapid-private.pem']
 if any((directory / name).exists() for name in names):
     raise SystemExit('Configuration already exists; refusing to replace credentials.')
 
@@ -37,4 +38,11 @@ sql.write_text('\n'.join(statements) + '\n')
 # The official MySQL entrypoint runs as UID 999. The parent directory stays root-only.
 os.chown(sql, 999, 999)
 sql.chmod(0o400)
+private = directory / 'vapid-private.pem'
+subprocess.run(['openssl', 'genpkey', '-algorithm', 'EC', '-pkeyopt', 'ec_paramgen_curve:prime256v1', '-out', str(private)], check=True)
+public = subprocess.check_output(['openssl', 'pkey', '-in', str(private), '-pubout', '-outform', 'DER'])
+os.chown(private, 10001, 10001)
+private.chmod(0o400)
+with (directory / 'production.env').open('a') as environment:
+    environment.write('VAPID_PUBLIC_KEY=' + base64.urlsafe_b64encode(public[-65:]).decode().rstrip('=') + '\nVAPID_SUBJECT=mailto:admin@inteliagent.com.br\n')
 print('Private credentials generated. Configure SMTP before enabling email-dependent flows.')
