@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Pull only the current master commit after its CI workflow succeeds."""
-import fcntl, json, pathlib, subprocess, urllib.request, os
+import fcntl, json, pathlib, subprocess, urllib.request, os, gzip, datetime
 ROOT=pathlib.Path('/opt/inteliagent')
 os.chdir(ROOT)
 lock=open('/run/lock/inteliagent-deploy.lock','w')
@@ -28,6 +28,13 @@ compose=['docker','compose','-f','deploy/compose.yaml']
 try:
     # Sequential builds limit peak memory on the local server.
     for repo in changed: subprocess.run(compose+['build',repo.removeprefix('inteliagent-')],check=True)
+    backup_dir=pathlib.Path('.local/backups'); backup_dir.mkdir(mode=0o700,exist_ok=True)
+    backup=backup_dir/(datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'.sql.gz')
+    os.umask(0o077)
+    with gzip.open(backup,'wb') as output:
+        dump=subprocess.Popen(compose+['exec','-T','mysql','sh','-c','export MYSQL_PWD="$MYSQL_ROOT_PASSWORD"; exec mysqldump -uroot --single-transaction --routines --events --no-tablespaces inteliagent'],stdout=subprocess.PIPE)
+        while chunk:=dump.stdout.read(1024*1024): output.write(chunk)
+        if dump.wait()!=0: raise RuntimeError('Database backup failed; deploy cancelled')
     subprocess.run(compose+['up','-d','--force-recreate','migration'],check=True)
     subprocess.run(compose+['wait','migration'],check=True)
     subprocess.run(compose+['up','-d','--wait','--wait-timeout','240'],check=True)

@@ -6,6 +6,12 @@ x-java: &java
   tmpfs: [/tmp]
   security_opt: [no-new-privileges:true]
   mem_limit: 768m
+  healthcheck:
+    test: [CMD-SHELL, "curl -fsS http://localhost:$${PORT}/actuator/health || exit 1"]
+    start_period: 90s
+    interval: 15s
+    timeout: 5s
+    retries: 10
   depends_on:
     migration:
       condition: service_completed_successfully
@@ -65,6 +71,11 @@ services:
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]
     mem_limit: 384m
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 10
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -83,6 +94,10 @@ services:
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]
     mem_limit: 128m
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:5174/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 6s
   webapp:
     restart: unless-stopped
     build: ../inteliagent-webapp
