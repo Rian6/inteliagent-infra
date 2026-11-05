@@ -1,0 +1,101 @@
+name: inteliagent
+x-java: &java
+  restart: unless-stopped
+  env_file: ../.local/production.env
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 768m
+  depends_on:
+    migration:
+      condition: service_completed_successfully
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: [--lower-case-table-names=1, --max-connections=100]
+    env_file: ../.local/database.env
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../.local/init.sql:/docker-entrypoint-initdb.d/01-users.sql:ro
+    healthcheck:
+      test: [CMD, mysqladmin, ping, -h, localhost]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    mem_limit: 1024m
+  migration:
+    build: ../inteliagent-migration
+    env_file: ../.local/migration.env
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+  auth:
+    <<: *java
+    build: ../inteliagent-auth
+    env_file: [../.local/production.env, ../.local/auth.env]
+    environment:
+      PORT: '8080'
+      AUTH_COOKIE_SECURE: 'true'
+    healthcheck:
+      test: [CMD-SHELL, "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      start_period: 90s
+      interval: 30s
+  main-server:
+    <<: *java
+    build: ../inteliagent-main-server
+    env_file: [../.local/production.env, ../.local/main-server.env]
+    environment:
+      PORT: '8070'
+  load-server:
+    <<: *java
+    build: ../inteliagent-load-server
+    env_file: [../.local/production.env, ../.local/load-server.env]
+    environment:
+      PORT: '8090'
+  chat:
+    restart: unless-stopped
+    build: ../inteliagent-chat
+    env_file: [../.local/production.env, ../.local/chat.env]
+    volumes: [chat-media:/data]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+  versions:
+    build:
+      context: ..
+      dockerfile: deploy/versions.Dockerfile
+    user: '10001:10001'
+    restart: unless-stopped
+    working_dir: /workspace
+    command: [node, services/version-service.mjs]
+    volumes:
+      - ../services:/workspace/services:ro
+      - version-cache:/workspace/.local
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+  webapp:
+    restart: unless-stopped
+    build: ../inteliagent-webapp
+    ports: ['127.0.0.1:8180:80']
+    depends_on: [auth, main-server, load-server, chat, versions]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://localhost/healthz]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+volumes:
+  mysql-data:
+  chat-media:
+  version-cache:

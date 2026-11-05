@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {summarizeReportRows,laboratoryErrors} from '../inteliagent-app/src/reports/daily-summary.ts';
+const lab={concluido:true,dataEntrada:'2026-11-01',dataConclusao:'2026-11-02',nome:'Laboratório municipal',laboratorista:'Analista',aegypti:{depositos:{A1:2},larvas:5,pupas:1},albopictus:{depositos:{B:1},adultos:2}};
+assert.deepEqual(laboratoryErrors({laboratorio:lab}),{});
+assert.ok(Object.keys(laboratoryErrors({laboratorio:{...lab,dataConclusao:'2026-10-31'}})).length);
+assert.ok(Object.keys(laboratoryErrors({laboratorio:{...lab,dataEntrada:'2026-02-30'}})).length);
+assert.ok(Object.keys(laboratoryErrors({laboratorio:{...lab,aegypti:{larvas:-1}}})).length);
+const rows=[{status:3,b:{quarteirao:'12',quarteiraoConcluido:true,imovelInformado:true,laboratorio:lab},values:{tipo:'R',visita:'R',li:'X',d1:3,tubos:2,f1tipo:'BTI',f1gramas:'0,75',f1dep:2}},{status:1,b:{quarteirao:'12'},values:{tipo:'C'}},{status:2,b:{quarteirao:'13'},values:{tipo:'C'}}];
+const s=summarizeReportRows(rows);assert.deepEqual(s.properties,[1,0,0,0,0]);assert.equal(s.closed,1);assert.equal(s.refused,1);assert.equal(s.recovered,1);assert.equal(s.informed,1);assert.deepEqual(s.quarters,['12']);assert.deepEqual(s.completedQuarters,['12']);assert.equal(s.focalProducts[0].gramas,.75);assert.equal(s.labCount,1);assert.equal(s.species[0].deposits[0],2);assert.equal(s.species[0].properties[0],1);assert.deepEqual(s.species[0].specimens,[5,1,0,0]);assert.equal(s.species[1].deposits[2],1);assert.deepEqual(s.species[1].quarters,['12']);
+console.log('Daily summary passed: pending properties, treatment, deduplicated quarters, lab species/results and validation.');

@@ -1,0 +1,9 @@
+[Unit]
+Description=Deploy Inteliagent commits approved by GitHub CI
+After=docker.service network-online.target
+Requires=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/inteliagent/deploy/update.py
+WorkingDirectory=/opt/inteliagent
+TimeoutStartSec=3600

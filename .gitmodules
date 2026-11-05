@@ -1,0 +1,21 @@
+[submodule "inteliagent-app"]
+	path = inteliagent-app
+	url = https://github.com/Rian6/inteliagent-app.git
+[submodule "inteliagent-auth"]
+	path = inteliagent-auth
+	url = https://github.com/Rian6/inteliagent-auth.git
+[submodule "inteliagent-chat"]
+	path = inteliagent-chat
+	url = https://github.com/Rian6/inteliagent-chat.git
+[submodule "inteliagent-load-server"]
+	path = inteliagent-load-server
+	url = https://github.com/Rian6/inteliagent-load-server.git
+[submodule "inteliagent-main-server"]
+	path = inteliagent-main-server
+	url = https://github.com/Rian6/inteliagent-main-server.git
+[submodule "inteliagent-migration"]
+	path = inteliagent-migration
+	url = https://github.com/Rian6/inteliagent-migration.git
+[submodule "inteliagent-webapp"]
+	path = inteliagent-webapp
+	url = https://github.com/Rian6/inteliagent-webapp.git

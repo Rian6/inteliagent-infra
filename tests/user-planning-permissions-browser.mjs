@@ -1,0 +1,21 @@
+﻿import fs from 'node:fs';import assert from 'node:assert/strict';import {chromium} from 'playwright';
+const a=JSON.parse(fs.readFileSync('.local/test-accounts.json','utf8')),fixture=JSON.parse(fs.readFileSync('.local/pdf-permissions-fixture.json','utf8'));
+const browser=await chromium.launch({headless:true,executablePath:'C:/Users/amand/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe'});const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage(),other=await browser.newContext({viewport:{width:1440,height:1000}}),targetPage=await other.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));targetPage.on('pageerror',e=>errors.push(e.message));let original;
+async function login(p,account){await p.goto(a.webUrl);await p.getByLabel(/^Email/).fill(account.email);await p.getByLabel(/^Senha/).fill(account.password);await p.getByRole('button',{name:'Entrar',exact:true}).click();await p.getByText('Uma visão do cuidado em campo',{exact:true}).waitFor();}
+try{
+ await login(page,a.web);await page.getByRole('link',{name:'Configuração',exact:true}).click();await page.getByRole('heading',{name:'Permissões por usuário',exact:true}).waitFor();
+ await page.getByLabel('Buscar usuário por nome ou email',{exact:true}).fill(a.mobile.email);
+ await page.getByRole('button',{name:'Configurar permissões de '+a.mobile.email,exact:true}).click();
+ const row=page.getByRole('article',{name:'Permissões de '+a.mobile.email,exact:true});await row.getByText('Administrador',{exact:true}).waitFor();
+ const create=row.getByRole('switch',{name:'Cadastrar planejamentos · '+a.mobile.email,exact:true}),edit=row.getByRole('switch',{name:'Editar planejamentos existentes · '+a.mobile.email,exact:true});original={createPlanning:await create.isChecked(),editPlanning:await edit.isChecked()};
+ await create.setChecked(false);await edit.setChecked(false);await row.getByRole('button',{name:/^Salvar permissões de/}).click();await page.getByText(/Permissões salvas para/).waitFor();
+ await login(targetPage,a.mobile);await targetPage.goto(a.webUrl+'/planejamento');await targetPage.getByRole('heading',{name:'Planejamento',exact:true}).waitFor();assert.equal(await targetPage.getByRole('link',{name:'Novo planejamento',exact:true}).count(),0);assert.equal(await targetPage.getByRole('link',{name:/^Editar planejamento/}).count(),0);await targetPage.getByRole('link',{name:'Configuração',exact:true}).waitFor();
+ await create.setChecked(true);await row.getByRole('button',{name:/^Salvar permissões de/}).click();await page.getByText(/Permissões salvas para/).waitFor();await targetPage.reload();await targetPage.getByRole('link',{name:'Novo planejamento',exact:true}).waitFor();assert.equal(await targetPage.getByRole('link',{name:/^Editar planejamento/}).count(),0);
+ await targetPage.goto(a.webUrl+'/planejamento/cadastrar/'+fixture.planId+'?aba=geral');await targetPage.getByLabel('Nome da região',{exact:false}).waitFor();assert.equal(await targetPage.getByRole('button',{name:'Salvar planejamento',exact:true}).count(),0);assert.equal(await targetPage.getByLabel('Nome da região',{exact:false}).isDisabled(),true);
+ await create.setChecked(false);await edit.setChecked(true);await row.getByRole('button',{name:/^Salvar permissões de/}).click();await page.getByText(/Permissões salvas para/).waitFor();await targetPage.reload();await targetPage.getByRole('button',{name:'Salvar planejamento',exact:true}).waitFor();
+ for(const width of [320,390,768,1440]){await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'overflow '+width);}
+ await page.screenshot({path:'.local/user-planning-permissions.png',fullPage:true});assert.deepEqual(errors,[]);console.log('User permission UI passed: admin search/list, save, read-only planning, create-only/edit-only access, settings retained and responsive widths.');
+}finally{
+ if(original){await page.evaluate(async({email,flags})=>{const {api}=await import('/src/services/api.js');const {data}=await api.get('/api/user/planning-permissions');const row=data.find(r=>r.email===email);await api.put('/api/user/planning-permissions/'+row.id,flags);},{email:a.mobile.email,flags:original});}
+ await browser.close();
+}

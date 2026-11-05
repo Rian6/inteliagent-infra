@@ -1,0 +1,8 @@
+[Unit]
+Description=Check approved Inteliagent updates every 30 minutes
+[Timer]
+OnBootSec=5min
+OnUnitInactiveSec=30min
+Persistent=true
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,12 @@
+﻿@font-face {
+  font-family: Inter-Regular;
+  src: url(../../inteliagent-app/src/assets/fonts/Inter-Regular.ttf);
+}
+@font-face {
+  font-family: Inter-SemiBold;
+  src: url(../../inteliagent-app/src/assets/fonts/Inter-SemiBold.ttf);
+}
+@font-face {
+  font-family: MaterialCommunityIcons;
+  src: url(../../inteliagent-app/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf);
+}

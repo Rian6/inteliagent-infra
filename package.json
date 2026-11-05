@@ -1,0 +1,16 @@
+{
+  "name": "inteliagent-local-workspace",
+  "private": true,
+  "scripts": {
+    "test:browser": "node tests/browser.mjs",
+    "test:ui": "node tests/ui.mjs",
+    "test:planning": "node tests/planning-browser.mjs",
+    "test:sessions": "node tests/sessions-browser.mjs && node tests/native-sessions.mjs",
+    "test:mobile-ui": "node tests/mobile-steps-browser.mjs",
+    "brand:generate": "node scripts/generate-brand.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.0",
+    "prettier": "^3.9.10"
+  }
+}

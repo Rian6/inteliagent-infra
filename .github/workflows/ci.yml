@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - run: python -m compileall -q deploy services scripts
+      - run: node --check services/version-service.mjs && node --check services/github-releases.mjs
+      - name: Validate Compose without production secrets
+        run: |
+          mkdir -p .local
+          touch .local/init.sql
+          for name in production database migration auth main-server load-server chat; do
+            touch ".local/$name.env"
+          done
+          docker compose -f deploy/compose.yaml config --quiet
+      - run: node tests/message-push-sw.mjs
