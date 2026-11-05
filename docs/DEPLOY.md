@@ -29,7 +29,7 @@ journalctl -u inteliagent-update.service --no-pager
 systemctl status inteliagent-tunnel
 ```
 
-A infraestrutura fica fixada ao commit instalado e deve ser atualizada explicitamente após revisão. Mudanças incompatíveis entre serviços exigem deploy coordenado. O rollback de código não desfaz migrações de banco.
+A infraestrutura e o serviço de versões também avançam somente após o CI do repositório de infraestrutura aprovar o commit atual de master. Revise alterações de infraestrutura antes de enviá-las para essa branch. Mudanças incompatíveis entre serviços exigem deploy coordenado. O rollback de código não desfaz migrações de banco.
 
 ## Android
 
