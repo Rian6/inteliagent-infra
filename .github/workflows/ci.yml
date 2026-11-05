@@ -31,3 +31,4 @@ jobs:
           done
           docker compose -f deploy/compose.yaml config --quiet
       - run: node tests/message-push-sw.mjs
+      - run: node tests/catalog-consistency.mjs
