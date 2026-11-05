@@ -41,6 +41,8 @@ A assinatura histórica é preservada para atualizar os APKs existentes. A chave
 
 Configure SMTP_HOST/PORT/USER/PASSWORD, SMTP_AUTH/TLS e MAIL_FROM em `.local/production.env` para cadastro e recuperação por email. O SMTP local de testes não entrega emails externos. O administrador inicial precisa de bootstrap controlado; não publique contas de demonstração.
 
+Em uma base sem usuários, instale `python3-bcrypt` e execute `sudo python3 deploy/bootstrap-admin.py --email SEU_EMAIL`. O script cria a primeira sede e um administrador aprovado com senha aleatória e BCrypt, verifica o login e salva as credenciais somente em `.local/production-admin.json` (600). Ele recusa substituir usuários existentes. O login inicial funciona antes de configurar SMTP; cadastro e recuperação dependem do provedor de email.
+
 Após configurar e testar o provedor, defina SMTP_HEALTH_ENABLED=true para incluir SMTP no healthcheck do auth. Enquanto não há provedor, o healthcheck cobre a API e o banco, e os fluxos de email permanecem indisponíveis.
 
 ## Recuperação
