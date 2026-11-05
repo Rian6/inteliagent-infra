@@ -43,6 +43,7 @@ try:
     # Every backend must respond successfully before accepting a deployment.
     for service,port in [('auth',8080),('main-server',8070),('load-server',8090)]:
         subprocess.run(compose+['exec','-T',service,'curl','--retry','20','--retry-all-errors','--retry-delay','3','-fsS',f'http://localhost:{port}/actuator/health'],check=True)
+    subprocess.run(['python3','deploy/smoke.py'],check=True)
     pathlib.Path('.local/deployed.json').write_text(json.dumps({r:run('git','-C',r,'rev-parse','HEAD') for r in previous},indent=2))
 except Exception:
     for repo in changed: run('git','-C',repo,'checkout','--detach',previous[repo])
