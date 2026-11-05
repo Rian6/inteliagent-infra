@@ -8,6 +8,8 @@ Servidor: `/opt/inteliagent`. Arquivos privados: `.local/` (diretório 700, arqu
 
 Instale Docker e Compose e clone o repositório com submódulos. Gere credenciais próprias para cada serviço. Use `deploy/production.env.example` como referência. Crie `.local/database.env` com MYSQL_ROOT_PASSWORD e MYSQL_DATABASE, `.local/migration.env` com DB_URL/DB_USER/DB_PASSWORD e `.local/<serviço>.env` com DB_USER/DB_PASSWORD. `.local/init.sql` cria os usuários em bancos novos. Somente a conta de migração precisa de DDL.
 
+Para gerar esses arquivos automaticamente, execute `sudo python3 deploy/init-env.py` uma única vez. O script recusa substituir configurações existentes. O arquivo init.sql pertence ao UID 999 do MySQL, com modo 400, dentro do diretório privado de root; os demais arquivos usam modo 600.
+
 ```sh
 docker compose -f deploy/compose.yaml build
 docker compose -f deploy/compose.yaml up -d
